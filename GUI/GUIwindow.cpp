@@ -225,7 +225,7 @@ void GUIwindow::execute() {
     XEvent      exppp;
     XEvent      event;
     
-    XSelectInput(gui->linux.display_, window, ExposureMask | StructureNotifyMask | KeyPressMask | PointerMotionMask | ButtonPressMask );
+    XSelectInput(gui->linux.display_, window, ExposureMask | StructureNotifyMask | KeyPressMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask );
      
     //Показываем окно на экране
     XMapWindow(gui->linux.display_, window);
@@ -323,6 +323,13 @@ void GUIwindow::execute() {
                         break;
                     case KeyPress:
                         printf("18\n");
+                        break;
+                    case ButtonRelease:
+                        //printf("19\n");
+                        window_user_event.type = WindowUserEvent::UserEventType::uev_MouseUnpress;
+                        window_user_event.x = event.xbutton.x;
+                        window_user_event.y = event.xbutton.y;
+                        StaticUserInput(parent, &window_user_event);
                         break;
                     default: 
                         printf("other\n");
@@ -576,52 +583,66 @@ LRESULT GUIwindow::WM_MOVE_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
 
 
 LRESULT GUIwindow::WM_CANCELMODE_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("WM_CANCELMODE_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 LRESULT GUIwindow::WM_QUEUESYNC_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("WM_QUEUESYNC_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 LRESULT GUIwindow::WM_CHILDACTIVATE_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("WM_CHILDACTIVATE_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 LRESULT GUIwindow::WM_MOUSEACTIVATE_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    //printf("WM_MOUSEACTIVATE_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 
 
 LRESULT GUIwindow::WM_MOUSEMOVE_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("WM_MOUSEMOVE_\n");
+    //printf("WM_MOUSEMOVE_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 LRESULT GUIwindow::WM_SETCURSOR_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    //printf("WM_SETCURSOR_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 LRESULT GUIwindow::WM_NCHITTEST_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
     //printf("\n");
     //return DefWindowProc(hw, msg, wp, lp);
+    
+    int mx = (int)LOWORD(lp), my = (int)HIWORD(lp);
+
+    RECT rr;
+    if (GetWindowRect(hw, &rr) != TRUE) return 0;
+    my -= (int)rr.top;
+    mx -= (int)rr.left;
+
+    GUIitem* item = gui_items->get_active_item_by_xy(mx, my);
+    if(item != nullptr) {
+        printf("AAA");
+        return HTCLIENT;
+    }
+    printf("nnn %d %d\n", mx, my);
     return HTCAPTION;
 }
 LRESULT GUIwindow::WM_GETMINMAXINFO_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("WM_GETMINMAXINFO_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 
 
 LRESULT GUIwindow::WM_RBUTTONDOWN_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("WM_RBUTTONDOWN_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 LRESULT GUIwindow::WM_RBUTTONUP_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("WM_RBUTTONUP_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 LRESULT GUIwindow::WM_CONTEXTMENU_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("WM_CONTEXTMENU_\n");
     return DefWindowProc(hw, msg, wp, lp);
 }
 
@@ -648,11 +669,22 @@ LRESULT GUIwindow::WM_SIZE_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
 }
 
 LRESULT GUIwindow::WM_LBUTTONDOWN_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("GUIwindow::WM_LBUTTONDOWN_\n");
+    int mx = (int)LOWORD(lp), my = (int)HIWORD(lp);
+    
+    window_user_event.type = WindowUserEvent::UserEventType::uev_MousePress;
+    window_user_event.x = mx;
+    window_user_event.y = my;
+    StaticUserInput(parent, &window_user_event);
     return DefWindowProc(hw, msg, wp, lp);
 }
 LRESULT GUIwindow::WM_LBUTTONUP_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
-    printf("\n");
+    printf("WM_LBUTTONUP_\n");
+    int mx = (int)LOWORD(lp), my = (int)HIWORD(lp);
+    window_user_event.type = WindowUserEvent::UserEventType::uev_MouseUnpress;
+    window_user_event.x = mx;
+    window_user_event.y = my;
+    StaticUserInput(parent, &window_user_event);
     return DefWindowProc(hw, msg, wp, lp);   
 }
 LRESULT GUIwindow::WM_PAINT_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
@@ -676,6 +708,18 @@ LRESULT GUIwindow::WM_PAINT_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
 }
 #endif // w32
 
+void GUIwindow::need_refresh() {
+    printf("printf\n");
+#ifdef _WIN32
+    RECT r;
+    r.left = 0;
+    r.top = 0;
+    r.right = 5000;
+    r.bottom = 5000;
+    InvalidateRect(viewer_window_hwnd, nullptr, FALSE);
+#endif
+}
+
 void GUIwindow::event_resize(uint32_t width, uint32_t height) {
     screen->set_size(width, height);
     
@@ -687,4 +731,14 @@ void GUIwindow::event_paint() {
     screen->line_h(screen->w-50, screen->h-1, 40, 0xff00aa);
     screen->print(gui->fonts.roboto220, 50, 50, L"123При");
     screen->paint_items(gui_items);
+}
+
+void GUIwindow::exit() {
+    printf("exit()\n");
+#ifdef __linux__
+    XDestroyWindow(gui->linux.display_, window);
+#endif
+#ifdef _WIN32
+    PostQuitMessage(0);
+#endif
 }

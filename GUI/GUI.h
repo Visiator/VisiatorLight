@@ -74,7 +74,7 @@ public:
     FONTS fonts;
     std::unique_ptr<GUIlowlevel> gui_low_level;
     GUIwindowList window_list;
-    
+    void invalidate();
     void test();
  
     GUIwindow* CreateWindow_(std::string name, GUIwindow::window_mode mode, RECTANGLE rectangle, GUIitems* gui_items, void* parent);

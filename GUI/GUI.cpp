@@ -52,3 +52,4 @@ GUIwindow* GUI::CreateWindow_(std::string name, GUIwindow::window_mode mode, REC
     
     return window_list.CreateWindow_(name, mode, rectangle, gui_items, parent);
 }
+

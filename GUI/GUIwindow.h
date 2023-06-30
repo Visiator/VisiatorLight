@@ -49,6 +49,7 @@ public:
           uev_notset = 0
         , uev_MousePress = 1
         , uev_KeyPress = 2
+        , uev_MouseUnpress = 3
     };
     int x, y;
     UserEventType type;
@@ -123,7 +124,7 @@ public:
     
     WindowUserEvent window_user_event;
     void (*StaticUserInput) (void* parent, WindowUserEvent* window_user_event);
-    void* parent;
+    void* parent = nullptr;
     
     void copy_from_( GUIwindow& src) {
         name       = src.name;
@@ -133,6 +134,8 @@ public:
         need__stop = src.need__stop;
         screen     = std::move(src.screen);
         gui_items  = src.gui_items;
+        parent     = src.parent;
+        StaticUserInput = src.StaticUserInput;
 #ifdef __linux__
         window     = src.window;
         image      = src.image;
@@ -150,7 +153,8 @@ public:
         src.gui = nullptr;
         src.screen = nullptr;
         src.gui_items = nullptr;
-        
+        src.parent = nullptr;
+        src.StaticUserInput = nullptr;
 #ifdef __linux__
         src.window     = 0;
         src.image      = nullptr;
@@ -161,10 +165,11 @@ public:
         src.viewer_window_hwnd = 0;
 #endif        
     }
-    
+    void need_refresh();
     void test();
     void run();
     void stop();
+    void exit();
     
     GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RECTANGLE rectangle, GUIitems* gui_items, void* parent);
     GUIwindow( GUIwindow& orig) = delete;

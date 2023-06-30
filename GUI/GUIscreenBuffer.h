@@ -120,7 +120,9 @@ public:
     }
     
     void paint_item(GUIitem& item) {
-        if(item.is_visible == false) return;
+        if(item.get_is_visible() == false) {
+            return;
+        }
         int x = item.get_gx(), y = item.get_gy();
         rectangle(x, y, item.frame.w, item.frame.h, 0xff00ff);
         if(item.textura != nullptr) {
