@@ -120,7 +120,7 @@ Pixmap nIconPixmap /*Рисунок пиктограммы */
 
 GUIwindow::GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RECTANGLE rectangle, GUIitems* gui_items, void* parent) : gui(gui), name(name), mode(mode), rectangle(rectangle), gui_items(gui_items), parent(parent)
 , need__stop(false)
-, screen(std::make_unique<SCREEN_BUFFER>())
+, screen(std::make_unique<SCREEN_BUFFER>(&gui->fonts))
 #ifdef __linux__
 , window(0)
 , image(nullptr)
@@ -729,7 +729,7 @@ void GUIwindow::event_paint() {
     screen->fill_all(0x773377);
     screen->line_h(10, 10, 50, 0xff00aa);
     screen->line_h(screen->w-50, screen->h-1, 40, 0xff00aa);
-    screen->print(gui->fonts.roboto220, 50, 50, L"123При");
+    //screen->print(gui->fonts.roboto220, 50, 50, L"123При");
     screen->paint_items(gui_items);
 }
 

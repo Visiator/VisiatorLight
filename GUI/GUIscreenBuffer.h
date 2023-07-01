@@ -18,7 +18,7 @@
 
 class SCREEN_BUFFER {
 public:
-    // 2023 FONTS fonts{this};
+    FONTS* fonts;
     bool need_update = false;
     unsigned int *buffer;
     unsigned int w, h;
@@ -34,7 +34,7 @@ public:
             return 0;
         }
     }
-    void print(FONT *fnt, unsigned int x, unsigned int y, const wchar_t *text);
+    void print(FONT *fnt, unsigned int x, unsigned int y, const wchar_t *text, uint32_t color);
     void line_h(unsigned int x, unsigned int y, unsigned int ww, unsigned int color) {
         if(x+ww >= w ) return;
         if(y >= h ) return;
@@ -119,12 +119,43 @@ public:
         
     }
     
+    void paint_item_editpass16(GUIitem& item) {
+        int x = item.get_gx(), y = item.get_gy();
+        rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
+        std::wstring ws = L"VELWOSW234567890";
+        FONT *font;
+        font = fonts->roboto150;
+        int text_w = font->text_width(ws);
+        int text_h = font->text_height(ws);
+        font->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788);        
+    }
+
+    void paint_item_editid(GUIitem& item) {
+        int x = item.get_gx(), y = item.get_gy();
+        rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
+        std::wstring ws = L"123-456-789";
+        int text_w = fonts->roboto220->text_width(ws);
+        int text_h = fonts->roboto220->text_height(ws);
+        fonts->roboto220->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788);        
+    }
+    
     void paint_item(GUIitem& item) {
         if(item.get_is_visible() == false) {
             return;
         }
         int x = item.get_gx(), y = item.get_gy();
         rectangle(x, y, item.frame.w, item.frame.h, 0xff00ff);
+        
+        if(item.type == GUIitem::ItemType::editpass16) {
+            paint_item_editpass16(item);
+            return;
+        }
+        
+        if(item.type == GUIitem::ItemType::editid) {
+            paint_item_editid(item);
+            return;
+        }
+
         if(item.textura != nullptr) {
             paint_textura(x, y, item.textura);
         }
@@ -137,7 +168,7 @@ public:
         }
     }
     
-    SCREEN_BUFFER() {
+    SCREEN_BUFFER(FONTS* fonts) : fonts(fonts) {
         buffer = nullptr;
         w = 0;
         h = 0;

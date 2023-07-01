@@ -61,8 +61,13 @@ public:
         , checkbox = 7
     };
     ItemType type;
+    std::wstring edit_text;
+    int edit_text_cursor_pos;
+    bool is_edit_begin;
+    
     GUItextura *textura = nullptr;
-    GUIitem(const char* item_id,  const char* parent_id, ItemType type, _FRAME frame, GUItextura *textura, bool is_visible, bool is_active) : id(item_id), parent_id(parent_id), type(type), frame(frame), textura(textura), is_visible(is_visible), is_active(is_active) { };
+    GUIitem(const char* item_id,  const char* parent_id, ItemType type, _FRAME frame, GUItextura *textura, bool is_visible, bool is_active) : id(item_id), parent_id(parent_id), type(type), frame(frame), textura(textura), is_visible(is_visible), is_active(is_active)
+    , edit_text(L""), edit_text_cursor_pos(-1), is_edit_begin(false) { };
     GUIitem(const GUIitem& src) = delete;
     GUIitem(GUIitem&& src) noexcept {
         *this = std::move(src);
@@ -85,6 +90,10 @@ public:
         textura    = src.textura;
         parent_id  = src.parent_id;
         parent     = src.parent;
+        edit_text  = src.edit_text;
+        edit_text_cursor_pos = src.edit_text_cursor_pos;
+        is_edit_begin = src.is_edit_begin;
+
     }
     void clear_(GUIitem& src) {
         src.id = "";
@@ -95,6 +104,9 @@ public:
         src.parent = nullptr;
         src.is_visible = false;
         src.is_active = false;
+        src.edit_text = L"";
+        src.edit_text_cursor_pos = -1;
+        src.is_edit_begin = false;
     }
     bool its_my(int x, int y) {
         int xx = get_gx(), yy = get_gy();
@@ -119,7 +131,7 @@ public:
                
         //GUIitem a(item_id, GUIitem::ItemType::panel, frame, textura);
         
-        items.push_back( {item_id, parent_id, GUIitem::ItemType::panel, frame, textura, is_visible, is_active} );
+        items.push_back( {item_id, parent_id, type, frame, textura, is_visible, is_active} );
         return true;
     }
     GUIitem* get_item_by_id(std::string& id) {

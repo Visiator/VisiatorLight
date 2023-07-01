@@ -114,6 +114,10 @@ bool ClientManager::InitGUIitems() {
     gui_items.addd("btn_out_w",  "panel1", GUIitem::ItemType::panel, _FRAME(77, 0, 80, 65),  gui_items.textura_list.get_textura_by_id("btn_out_w"), true, true );
     gui_items.addd("btn_auto_w", "panel1", GUIitem::ItemType::panel, _FRAME(157, 0, 77, 65), gui_items.textura_list.get_textura_by_id("btn_auto_w"), true, true );
 
+    gui_items.addd("edit_inc_id",   "panel_incoming", GUIitem::ItemType::editid , _FRAME(68, 63, 140, 28), nullptr, true, true );
+    gui_items.addd("edit_inc_pass", "panel_incoming", GUIitem::ItemType::editpass16 , _FRAME(68, 120, 140, 28), nullptr, true, true );
+
+    
     gui_items.addd("checkbox", "panel_autorun", GUIitem::ItemType::checkbox, _FRAME(25, 174, 18, 18), gui_items.textura_list.get_textura_by_id("checkbox"), true, true );
     gui_items.addd("checkbox_set", "panel_autorun", GUIitem::ItemType::checkbox, _FRAME(25, 174, 18, 18), gui_items.textura_list.get_textura_by_id("checkbox_set"), false, true );
     

@@ -5,7 +5,7 @@
 
 #include "GUIscreenBuffer.h"
 
-void SCREEN_BUFFER::print(FONT *fnt, unsigned int x, unsigned int y, const wchar_t *text) {
+void SCREEN_BUFFER::print(FONT *fnt, unsigned int x, unsigned int y, const wchar_t *text, uint32_t color) {
     if(fnt == nullptr) return;
-    fnt->print(this, x, y, text);
+    fnt->print(this, x, y, text, color);
 }

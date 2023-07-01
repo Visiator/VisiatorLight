@@ -24,7 +24,9 @@ private:
     uint32_t w, h;
     std::vector<uint8_t> buf;
 public:
-    void print(SCREEN_BUFFER *src, int& x, int y);
+    void print(SCREEN_BUFFER *src, int& x, int y, uint32_t color);
+    int get_w() { return w; };
+    int get_h() { return h; };
     //LETTER(uint32_t w, uint32_t h, uint8_t* buf);
     LETTER(uint32_t w, uint32_t h, const uint8_t* buf_src);
     LETTER() = delete;
@@ -77,8 +79,20 @@ public:
         clear_(src);
         return *this;
     }
-    void print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text);
-    void print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y);
+    void print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color);
+    void print(SCREEN_BUFFER *scr, int x, int y, std::wstring& text, uint32_t color) {
+        print(scr, x, y, text.c_str(), color);
+    }
+    int letter_height(LETTER& lt);
+    int text_height(const wchar_t* text);
+    int text_height(std::wstring& text);
+    
+    int letter_width(LETTER& lt);
+    int text_width(const wchar_t* text);
+    int text_width(std::wstring& text);
+
+    
+    void print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t color);
     void load_from_file(std::string name_file);
     void load_from_buffer(std::vector<uint8_t> buffer);
     void copy_from_(FONT& src) {
@@ -102,11 +116,14 @@ class FONTS {
 public:
     std::map<std::string, FONT> font;
     FONT* roboto220;
+    FONT* roboto150;
     FONTS() {
         
         font.emplace( std::make_pair<std::string, FONT>("roboto220", {15, "font_roboto_220.rawaaaa"}) );
+        font.emplace( std::make_pair<std::string, FONT>("roboto150", {15, "font_roboto_150.rawaaaa"}) );
         
         roboto220 = &font.at("roboto220");
+        roboto150 = &font.at("roboto150");
         //roboto220->print(1, 2, "123");
     }; 
     //FONTS();

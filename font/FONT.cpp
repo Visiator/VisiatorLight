@@ -98,35 +98,65 @@ void FONT::load_from_file(std::string name_file) {
     }*/
 }
 
-void LETTER::print(SCREEN_BUFFER *scr, int& x, int y) {
+void LETTER::print(SCREEN_BUFFER *scr, int& x, int y, uint32_t color) {
     int ii = 0;
     for(int hh=0; hh < h; hh++) {
         for(int ww=0; ww < w; ww++) {
-            uint32_t clr;
-            clr = scr->get_pix(x+ww, y+hh);
+            uint32_t screen_color = scr->get_pix(x+ww, y+hh);
             
             uint32_t percent = 255 - buf[ii++];
-
-            clr = transparent_color(clr, 0xffffff, percent);
             
-            scr->set_pix(x+ww, y+hh, clr);
+            scr->set_pix(x+ww, y+hh, transparent_color(screen_color, color, percent));
         }
     }
     x += w;
 }
 
-void FONT::print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y) {
-    lt.print(scr, x, y);
+void FONT::print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t color) {
+    lt.print(scr, x, y, color);
 }
 
-void FONT::print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text) {
+void FONT::print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color) {
     if(text == nullptr || scr == nullptr) return;
     int text_idx = 0;
     while(text[text_idx] != 0) {
         wchar_t t;
         t = wchar_to_ascii( text[text_idx] );
-        print_letter(letter.at(t), scr, x, y);
+        print_letter(letter.at(t), scr, x, y, color);
         text_idx++;
     }
     
+}
+
+int FONT::letter_height(LETTER& lt) {
+    return lt.get_h();
+}
+
+int FONT::text_height(const wchar_t* text) {
+    return letter_height(letter.at('H'));
+}
+
+int FONT::text_height(std::wstring& text) {
+    return text_height(text.c_str());
+}
+
+int FONT::letter_width(LETTER& lt) {
+    return lt.get_w();
+}
+
+int FONT::text_width(const wchar_t* text) {
+    int w = 0;
+    if(text == nullptr) return 0;
+    int text_idx = 0;
+    while(text[text_idx] != 0) {
+        wchar_t t;
+        t = wchar_to_ascii( text[text_idx] );
+        w += letter_width(letter.at(t));
+        text_idx++;
+    }
+    return w;
+}
+
+int FONT::text_width(std::wstring& text) {
+    return text_width(text.c_str());
 }
