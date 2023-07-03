@@ -98,7 +98,13 @@ void FONT::load_from_file(std::string name_file) {
     }*/
 }
 
-void LETTER::print(SCREEN_BUFFER *scr, int& x, int y, uint32_t color) {
+void LETTER::print(SCREEN_BUFFER *scr, int& x, int y, uint32_t color, bool show_cursor) {
+    
+    if(show_cursor) {
+        scr->line_v(x+w, y, h, 0xff0000);
+        scr->line_v(x+w-1, y, h, 0xff0000);
+    }
+    
     int ii = 0;
     for(int hh=0; hh < h; hh++) {
         for(int ww=0; ww < w; ww++) {
@@ -109,20 +115,21 @@ void LETTER::print(SCREEN_BUFFER *scr, int& x, int y, uint32_t color) {
             scr->set_pix(x+ww, y+hh, transparent_color(screen_color, color, percent));
         }
     }
+    
     x += w;
 }
 
-void FONT::print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t color) {
-    lt.print(scr, x, y, color);
+void FONT::print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t color, bool show_cursor) {
+    lt.print(scr, x, y, color, show_cursor);
 }
 
-void FONT::print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color) {
+void FONT::print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color, int cursor_pos) {
     if(text == nullptr || scr == nullptr) return;
     int text_idx = 0;
     while(text[text_idx] != 0) {
         wchar_t t;
         t = wchar_to_ascii( text[text_idx] );
-        print_letter(letter.at(t), scr, x, y, color);
+        print_letter(letter.at(t), scr, x, y, color, text_idx+1 == cursor_pos);
         text_idx++;
     }
     

@@ -34,7 +34,7 @@ public:
             return 0;
         }
     }
-    void print(FONT *fnt, unsigned int x, unsigned int y, const wchar_t *text, uint32_t color);
+    void print(FONT *fnt, unsigned int x, unsigned int y, const wchar_t *text, uint32_t color, int cursor_pos);
     void line_h(unsigned int x, unsigned int y, unsigned int ww, unsigned int color) {
         if(x+ww >= w ) return;
         if(y >= h ) return;
@@ -127,7 +127,7 @@ public:
         font = fonts->roboto150;
         int text_w = font->text_width(ws);
         int text_h = font->text_height(ws);
-        font->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788);        
+        //font->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788, false);        
     }
 
     void paint_item_editid(GUIitem& item) {
@@ -136,7 +136,13 @@ public:
         std::wstring ws = L"123-456-789";
         int text_w = fonts->roboto220->text_width(ws);
         int text_h = fonts->roboto220->text_height(ws);
-        fonts->roboto220->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788);        
+        uint32_t c = 0x007788;
+        if(item.is_edit_begin) {
+            c = 0xff0000;
+            fonts->roboto220->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788, item.edit_text_cursor_pos);
+        } else {
+            fonts->roboto220->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788, -1);
+        }
     }
     
     void paint_item(GUIitem& item) {

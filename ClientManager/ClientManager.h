@@ -48,11 +48,28 @@ public:
         printf("StaticUserInput\n");
         ((ClientManager *)parent)->UserInput(window_user_event);   
     }
+    void all_edit_begin_false() {
+        for(int i=0; i<gui_items.items.size(); i++) {
+            if(gui_items.items[i].is_edit_begin) {
+                gui_items.items[i].is_edit_begin = false;
+            }
+        }
+    }
     void UserInput(WindowUserEvent* window_user_event) {
         printf("UserInput %d %d \n", window_user_event->x, window_user_event->y);
         
+        GUIitem* item;
+        
+        if(window_user_event->type == WindowUserEvent::UserEventType::uev_KeyPress ) {
+            item = gui_items.get_edit_item();
+            if(item != nullptr) {
+                
+                return;
+            }
+        };
+        
         if(window_user_event->type == WindowUserEvent::UserEventType::uev_MousePress) {
-            GUIitem* item = gui_items.get_active_item_by_xy(window_user_event->x, window_user_event->y);
+            item = gui_items.get_active_item_by_xy(window_user_event->x, window_user_event->y);
             if(item == nullptr) {
                 printf("null\n");
                 return;
@@ -110,11 +127,22 @@ public:
                 window->need_refresh();
                 return;
             }
+            if(item->type == GUIitem::ItemType::editid ||
+               item->type == GUIitem::ItemType::editpass16 ||
+               item->type == GUIitem::ItemType::edittext) {
+                printf("edit_inc_id\n");
+                all_edit_begin_false();
+                item->is_edit_begin = true;
+                item->edit_text_cursor_pos = item->edit_text.size();
+                window->need_refresh();
+                return;
+            }
             printf("MousePress %d %d %s\n", window_user_event->x, window_user_event->y, item->id.c_str());
             return;
         }
         
         if(window_user_event->type == WindowUserEvent::UserEventType::uev_MouseUnpress) {
+            printf("Unpressed\n");
             if(gui_items.get_item_by_id("krest_white")->is_visible == true) {
                 gui_items.get_item_by_id("krest_black")->is_visible = true;
                 gui_items.get_item_by_id("krest_white")->is_visible = false;
@@ -125,11 +153,13 @@ public:
             if(gui_items.get_item_by_id("btn_connect_pressed")->is_visible == true) {
                 gui_items.get_item_by_id("btn_connect_pressed")->is_visible = false;
                 gui_items.get_item_by_id("btn_connect_normal")->is_visible = true;
+                window->need_refresh();
                 return;
             }
             if(gui_items.get_item_by_id("btn_www_pressed")->is_visible == true) {
                 gui_items.get_item_by_id("btn_www_pressed")->is_visible = false;
                 gui_items.get_item_by_id("btn_www_normal")->is_visible = true;
+                window->need_refresh();
                 return;
             }
             if(gui_items.get_item_by_id("btn_save_pressed")->is_visible == true) {

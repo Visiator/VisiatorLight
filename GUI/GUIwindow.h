@@ -53,6 +53,7 @@ public:
     };
     int x, y;
     UserEventType type;
+    uint32_t keycode;
 };
 
 class GUIwindow {

@@ -162,6 +162,14 @@ public:
         }
         return nullptr;
     }
+    GUIitem* get_edit_item() {
+        for(int i = 0; i < items.size(); i++) {
+            if(items[i].is_edit_begin ) {
+                return &items[i];
+            }
+        }
+        return nullptr;
+    }
     GUIitems() {
         
     }

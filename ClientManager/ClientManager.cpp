@@ -130,6 +130,7 @@ bool ClientManager::InitGUIitems() {
     gui_items.addd("btn_save_normal", "panel_autorun", GUIitem::ItemType::panel, _FRAME(102, 162, 122, 46), gui_items.textura_list.get_textura_by_id("btn_save_normal"), true, true );
     gui_items.addd("btn_save_pressed", "panel_autorun", GUIitem::ItemType::panel, _FRAME(102, 162, 122, 46), gui_items.textura_list.get_textura_by_id("btn_save_pressed"), false, true );
     
+    gui_items.get_item_by_id("edit_inc_id")->edit_text = L"345-678-901";
     
     for(int i=0; i < gui_items.items.size(); i++ ) {
         if(gui_items.items[i].parent_id != "" &&

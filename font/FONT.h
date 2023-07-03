@@ -24,7 +24,7 @@ private:
     uint32_t w, h;
     std::vector<uint8_t> buf;
 public:
-    void print(SCREEN_BUFFER *src, int& x, int y, uint32_t color);
+    void print(SCREEN_BUFFER *src, int& x, int y, uint32_t color, bool show_cursor);
     int get_w() { return w; };
     int get_h() { return h; };
     //LETTER(uint32_t w, uint32_t h, uint8_t* buf);
@@ -79,9 +79,9 @@ public:
         clear_(src);
         return *this;
     }
-    void print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color);
-    void print(SCREEN_BUFFER *scr, int x, int y, std::wstring& text, uint32_t color) {
-        print(scr, x, y, text.c_str(), color);
+    void print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color, int cursor_pos);
+    void print(SCREEN_BUFFER *scr, int x, int y, std::wstring& text, uint32_t color, int cursor_pos) {
+        print(scr, x, y, text.c_str(), color, cursor_pos);
     }
     int letter_height(LETTER& lt);
     int text_height(const wchar_t* text);
@@ -92,7 +92,7 @@ public:
     int text_width(std::wstring& text);
 
     
-    void print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t color);
+    void print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t color, bool show_cursor);
     void load_from_file(std::string name_file);
     void load_from_buffer(std::vector<uint8_t> buffer);
     void copy_from_(FONT& src) {
