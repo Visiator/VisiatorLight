@@ -63,7 +63,7 @@ public:
         if(window_user_event->type == WindowUserEvent::UserEventType::uev_KeyPress ) {
             item = gui_items.get_edit_item();
             if(item != nullptr) {
-                
+                item->UserInput(window_user_event);
                 return;
             }
         };

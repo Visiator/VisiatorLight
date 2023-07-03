@@ -122,26 +122,35 @@ public:
     void paint_item_editpass16(GUIitem& item) {
         int x = item.get_gx(), y = item.get_gy();
         rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
-        std::wstring ws = L"VELWOSW234567890";
+        
         FONT *font;
-        font = fonts->roboto150;
-        int text_w = font->text_width(ws);
-        int text_h = font->text_height(ws);
-        //font->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788, false);        
+        font = fonts->roboto220;
+        int text_w = font->text_width(item.edit_text);
+        int text_h = font->text_height(item.edit_text);
+        uint32_t c = 0x007788;
+        if(item.is_edit_begin) {
+            c = 0xff0000;
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, 0x007788, item.edit_text_cursor_pos);
+        } else {
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, 0x007788, -1);
+        }
     }
 
     void paint_item_editid(GUIitem& item) {
         int x = item.get_gx(), y = item.get_gy();
         rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
-        std::wstring ws = L"123-456-789";
-        int text_w = fonts->roboto220->text_width(ws);
-        int text_h = fonts->roboto220->text_height(ws);
+        
+        FONT *font;
+        font = fonts->roboto220;
+        
+        int text_w = font->text_width(item.edit_text);
+        int text_h = font->text_height(item.edit_text);
         uint32_t c = 0x007788;
         if(item.is_edit_begin) {
             c = 0xff0000;
-            fonts->roboto220->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788, item.edit_text_cursor_pos);
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, 0x007788, item.edit_text_cursor_pos);
         } else {
-            fonts->roboto220->print(this, x, y + (item.frame.h - text_h)/2, ws, 0x007788, -1);
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, 0x007788, -1);
         }
     }
     

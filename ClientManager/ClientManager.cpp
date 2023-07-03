@@ -114,8 +114,14 @@ bool ClientManager::InitGUIitems() {
     gui_items.addd("btn_out_w",  "panel1", GUIitem::ItemType::panel, _FRAME(77, 0, 80, 65),  gui_items.textura_list.get_textura_by_id("btn_out_w"), true, true );
     gui_items.addd("btn_auto_w", "panel1", GUIitem::ItemType::panel, _FRAME(157, 0, 77, 65), gui_items.textura_list.get_textura_by_id("btn_auto_w"), true, true );
 
-    gui_items.addd("edit_inc_id",   "panel_incoming", GUIitem::ItemType::editid , _FRAME(68, 63, 140, 28), nullptr, true, true );
-    gui_items.addd("edit_inc_pass", "panel_incoming", GUIitem::ItemType::editpass16 , _FRAME(68, 120, 140, 28), nullptr, true, true );
+    gui_items.addd("edit_inc_id",   "panel_incoming", GUIitem::ItemType::editid , _FRAME(68, 63, 140, 28), nullptr, true, false );
+    gui_items.addd("edit_inc_pass", "panel_incoming", GUIitem::ItemType::editpass16 , _FRAME(68, 120, 140, 28), nullptr, true, false );
+
+    gui_items.addd("edit_out_id",   "panel_outgoing", GUIitem::ItemType::editid , _FRAME(68, 63, 140, 28), nullptr, true, true );
+    gui_items.addd("edit_out_pass", "panel_outgoing", GUIitem::ItemType::editpass16 , _FRAME(68, 120, 140, 28), nullptr, true, true );
+
+    gui_items.addd("edit_auto_id",   "panel_autorun", GUIitem::ItemType::editid , _FRAME(68, 63, 140, 28), nullptr, true, false );
+    gui_items.addd("edit_auto_pass", "panel_autorun", GUIitem::ItemType::editpass16 , _FRAME(68, 120, 140, 28), nullptr, true, true );
 
     
     gui_items.addd("checkbox", "panel_autorun", GUIitem::ItemType::checkbox, _FRAME(25, 174, 18, 18), gui_items.textura_list.get_textura_by_id("checkbox"), true, true );
@@ -131,6 +137,13 @@ bool ClientManager::InitGUIitems() {
     gui_items.addd("btn_save_pressed", "panel_autorun", GUIitem::ItemType::panel, _FRAME(102, 162, 122, 46), gui_items.textura_list.get_textura_by_id("btn_save_pressed"), false, true );
     
     gui_items.get_item_by_id("edit_inc_id")->edit_text = L"345-678-901";
+    gui_items.get_item_by_id("edit_inc_pass")->edit_text = L"Pass123!@#";
+
+    gui_items.get_item_by_id("edit_out_id")->edit_text = L"340-678-901";
+    gui_items.get_item_by_id("edit_out_pass")->edit_text = L"PaSs123!@#";
+
+    gui_items.get_item_by_id("edit_auto_id")->edit_text = L"300-600-901";
+    gui_items.get_item_by_id("edit_auto_pass")->edit_text = L"Pa00000!@#";
     
     for(int i=0; i < gui_items.items.size(); i++ ) {
         if(gui_items.items[i].parent_id != "" &&

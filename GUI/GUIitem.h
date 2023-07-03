@@ -20,6 +20,8 @@
 #include "GUIprimitives.h"
 #include "GUItextura.h"
 
+class WindowUserEvent;
+
 class GUIitem {
 private:
     
@@ -116,6 +118,7 @@ public:
         }
         return false;
     }
+    void UserInput(WindowUserEvent* window_user_event);
     ~GUIitem() {
         
     }

@@ -98,9 +98,14 @@ void FONT::load_from_file(std::string name_file) {
     }*/
 }
 
-void LETTER::print(SCREEN_BUFFER *scr, int& x, int y, uint32_t color, bool show_cursor) {
+void LETTER::print(SCREEN_BUFFER *scr, int& x, int y, uint32_t color, bool show_cursor_left, bool show_cursor_right) {
     
-    if(show_cursor) {
+    if(show_cursor_left) {
+        scr->line_v(x, y, h, 0xff0000);
+        scr->line_v(x-1, y, h, 0xff0000);
+    }
+    
+    if(show_cursor_right) {
         scr->line_v(x+w, y, h, 0xff0000);
         scr->line_v(x+w-1, y, h, 0xff0000);
     }
@@ -119,8 +124,8 @@ void LETTER::print(SCREEN_BUFFER *scr, int& x, int y, uint32_t color, bool show_
     x += w;
 }
 
-void FONT::print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t color, bool show_cursor) {
-    lt.print(scr, x, y, color, show_cursor);
+void FONT::print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t color, bool show_cursor_left, bool show_cursor_right) {
+    lt.print(scr, x, y, color, show_cursor_left, show_cursor_right);
 }
 
 void FONT::print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color, int cursor_pos) {
@@ -129,7 +134,7 @@ void FONT::print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t
     while(text[text_idx] != 0) {
         wchar_t t;
         t = wchar_to_ascii( text[text_idx] );
-        print_letter(letter.at(t), scr, x, y, color, text_idx+1 == cursor_pos);
+        print_letter(letter.at(t), scr, x, y, color, text_idx == cursor_pos, text_idx+1 == cursor_pos);
         text_idx++;
     }
     

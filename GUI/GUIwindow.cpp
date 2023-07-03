@@ -323,6 +323,9 @@ void GUIwindow::execute() {
                         break;
                     case KeyPress:
                         printf("18\n");
+                        window_user_event.type = WindowUserEvent::UserEventType::uev_KeyPress;
+                        window_user_event.keycode = event.xkey.keycode;
+                        StaticUserInput(parent, &window_user_event);
                         break;
                     case ButtonRelease:
                         //printf("19\n");
