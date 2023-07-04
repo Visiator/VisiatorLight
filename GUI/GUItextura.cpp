@@ -37,7 +37,7 @@ void GUItextura::load_from_file(const char *name) {
         return;
     }
     if(head2.compression == 0 && head2.bitcount == 24) {
-        if(head1.size - head1.offBits == head2.sizeimage) {
+        if((head1.size - head1.offBits == head2.sizeimage) || head2.sizeimage == 0) {
             //int i = head1.offBits;
             union _rgb_ {
                 uint8_t b[4];

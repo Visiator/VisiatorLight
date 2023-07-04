@@ -128,12 +128,17 @@ void FONT::print_letter(LETTER& lt, SCREEN_BUFFER *scr, int& x, int y, uint32_t 
     lt.print(scr, x, y, color, show_cursor_left, show_cursor_right);
 }
 
-void FONT::print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color, int cursor_pos) {
+void FONT::print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, bool is_pass, uint32_t color, int cursor_pos) {
     if(text == nullptr || scr == nullptr) return;
     int text_idx = 0;
     while(text[text_idx] != 0) {
         wchar_t t;
-        t = wchar_to_ascii( text[text_idx] );
+        if(is_pass) {
+            t = 150;
+        } else {
+            t = wchar_to_ascii( text[text_idx] );
+        }
+        
         print_letter(letter.at(t), scr, x, y, color, text_idx == cursor_pos, text_idx+1 == cursor_pos);
         text_idx++;
     }

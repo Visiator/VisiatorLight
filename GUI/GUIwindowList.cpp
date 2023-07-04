@@ -21,18 +21,19 @@ GUIwindowList::GUIwindowList(GUI *gui) : gui(gui) {
 GUIwindow* GUIwindowList::CreateWindow_(std::string name, GUIwindow::window_mode mode, RECTANGLE rectangle, GUIitems* gui_items, void* parent) {
     
     for(const auto& w : window_list) {
-        if(w.name == name) {
+        if(w.window->name == name) {
             return nullptr;
         }
     }
     
-    window_list.push_back({gui, name, mode, rectangle, gui_items, parent});
+    window_list.push_back({11, gui, name, mode, rectangle, gui_items, parent});//, name, mode, rectangle, gui_items, parent}); 
     
     for(unsigned int i = 0; i < window_list.size(); i++) {
-        printf("[%d] WL screen = %s\n", i, window_list[i].screen == NULL ? "NULL" : "OK");
-        if(window_list[i].name == name) {
-            window_list[i].run();
-            return &window_list[i];
+        printf("[%d] WL screen = %s\n", i, window_list[i].window->screen == NULL ? "NULL" : "OK");
+        
+        if(window_list[i].window->name == name) {
+            window_list[i].window->run();
+            return window_list[i].window.get();
         }
     }
     

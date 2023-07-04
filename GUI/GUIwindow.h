@@ -107,7 +107,8 @@ public:
     LRESULT WM_WINDOWPOSCHANGED_(HWND hw, UINT msg, WPARAM wp, LPARAM lp);
     LRESULT WM_NCACTIVATE_(HWND hw, UINT msg, WPARAM wp, LPARAM lp);
     LRESULT WM_MOVE_(HWND hw, UINT msg, WPARAM wp, LPARAM lp);
-    LRESULT WM_NCDESTROY_(HWND hw, UINT msg, WPARAM wp, LPARAM lp);   
+    LRESULT WM_NCDESTROY_(HWND hw, UINT msg, WPARAM wp, LPARAM lp);
+    LRESULT WM_KEYDOWN_(HWND hw, UINT msg, WPARAM wp, LPARAM lp);
     
 #endif
     enum window_mode {

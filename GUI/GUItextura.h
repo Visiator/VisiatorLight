@@ -52,11 +52,11 @@ public:
     GUItextura(const GUItextura& src) = delete;
     GUItextura(GUItextura&& src) noexcept {
         *this = std::move(src);
-        printf("GUItextura constructor move\n");       
+        //printf("GUItextura constructor move\n");       
     }
     GUItextura& operator=(const GUItextura& src) = delete;
     GUItextura& operator=(GUItextura&& src) {
-        printf("GUItextura = move\n");
+        //printf("GUItextura = move\n");
         if(&src == this) return *this;
         copy_from_(src);
         clear_(src);

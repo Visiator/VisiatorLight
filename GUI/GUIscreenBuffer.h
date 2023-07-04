@@ -34,7 +34,7 @@ public:
             return 0;
         }
     }
-    void print(FONT *fnt, unsigned int x, unsigned int y, const wchar_t *text, uint32_t color, int cursor_pos);
+    void print(FONT *fnt, unsigned int x, unsigned int y, const wchar_t *text, bool is_pass, uint32_t color, int cursor_pos);
     void line_h(unsigned int x, unsigned int y, unsigned int ww, unsigned int color) {
         if(x+ww >= w ) return;
         if(y >= h ) return;
@@ -121,7 +121,7 @@ public:
     
     void paint_item_editpass16(GUIitem& item) {
         int x = item.get_gx(), y = item.get_gy();
-        rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
+        //rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
         
         FONT *font;
         font = fonts->roboto220;
@@ -129,16 +129,33 @@ public:
         int text_h = font->text_height(item.edit_text);
         uint32_t c = 0x007788;
         if(item.is_edit_begin) {
-            c = 0xff0000;
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, 0x007788, item.edit_text_cursor_pos);
+            c = 0x00ffff;
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, !item.is_visible_pass, c, item.edit_text_cursor_pos);
         } else {
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, 0x007788, -1);
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, !item.is_visible_pass, c, -1);
         }
     }
 
+    void paint_item_edittext(GUIitem& item) {
+        int x = item.get_gx(), y = item.get_gy();
+        //rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
+        
+        FONT *font;
+        font = fonts->roboto220;
+        int text_w = font->text_width(item.edit_text);
+        int text_h = font->text_height(item.edit_text);
+        uint32_t c = 0x007788;
+        if(item.is_edit_begin) {
+            c = 0x00ffff;
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, false, c, item.edit_text_cursor_pos);
+        } else {
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, false, c, -1);
+        }
+    }
+    
     void paint_item_editid(GUIitem& item) {
         int x = item.get_gx(), y = item.get_gy();
-        rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
+        //rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
         
         FONT *font;
         font = fonts->roboto220;
@@ -148,9 +165,9 @@ public:
         uint32_t c = 0x007788;
         if(item.is_edit_begin) {
             c = 0xff0000;
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, 0x007788, item.edit_text_cursor_pos);
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, false, 0x007788, item.edit_text_cursor_pos);
         } else {
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, 0x007788, -1);
+            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, false, 0x007788, -1);
         }
     }
     
@@ -159,10 +176,14 @@ public:
             return;
         }
         int x = item.get_gx(), y = item.get_gy();
-        rectangle(x, y, item.frame.w, item.frame.h, 0xff00ff);
+        //rectangle(x, y, item.frame.w, item.frame.h, 0xff00ff);
         
         if(item.type == GUIitem::ItemType::editpass16) {
             paint_item_editpass16(item);
+            return;
+        }
+        if(item.type == GUIitem::ItemType::edittext) {
+            paint_item_edittext(item);
             return;
         }
         
@@ -178,6 +199,7 @@ public:
     }
     
     void paint_items(GUIitems* items) {
+        if(items == nullptr) return;
         for(int i=0; i < items->items.size(); i++) {
             paint_item(items->items[i]);
         }

@@ -87,6 +87,9 @@ void ClientManager::init_textures() {
     gui_items.textura_list.add( "inc/btn_www_normal.bmp" , "btn_www_normal");
     gui_items.textura_list.add( "inc/btn_www_pressed.bmp" , "btn_www_pressed");
 
+    gui_items.textura_list.add( "inc/eye.bmp" , "eye");
+    gui_items.textura_list.add( "inc/eye_active.bmp" , "eye_active");
+
     //btn_inc_yel = textura_list.get_textura_by_id("btn_inc_yel");
 }
 
@@ -115,23 +118,29 @@ bool ClientManager::InitGUIitems() {
     gui_items.addd("btn_auto_w", "panel1", GUIitem::ItemType::panel, _FRAME(157, 0, 77, 65), gui_items.textura_list.get_textura_by_id("btn_auto_w"), true, true );
 
     gui_items.addd("edit_inc_id",   "panel_incoming", GUIitem::ItemType::editid , _FRAME(68, 63, 140, 28), nullptr, true, false );
-    gui_items.addd("edit_inc_pass", "panel_incoming", GUIitem::ItemType::editpass16 , _FRAME(68, 120, 140, 28), nullptr, true, false );
+    gui_items.addd("edit_inc_pass", "panel_incoming", GUIitem::ItemType::edittext , _FRAME(68, 120, 140, 28), nullptr, true, false );
 
+    
     gui_items.addd("edit_out_id",   "panel_outgoing", GUIitem::ItemType::editid , _FRAME(68, 63, 140, 28), nullptr, true, true );
     gui_items.addd("edit_out_pass", "panel_outgoing", GUIitem::ItemType::editpass16 , _FRAME(68, 120, 140, 28), nullptr, true, true );
 
+    gui_items.addd("eye_out", "edit_out_pass", GUIitem::ItemType::panel , _FRAME(135, 9, 14, 10), gui_items.textura_list.get_textura_by_id("eye"), true, true );
+    gui_items.addd("eye_out_active", "edit_out_pass", GUIitem::ItemType::panel , _FRAME(135, 9, 14, 10), gui_items.textura_list.get_textura_by_id("eye_active"), false, true );
+
     gui_items.addd("edit_auto_id",   "panel_autorun", GUIitem::ItemType::editid , _FRAME(68, 63, 140, 28), nullptr, true, false );
     gui_items.addd("edit_auto_pass", "panel_autorun", GUIitem::ItemType::editpass16 , _FRAME(68, 120, 140, 28), nullptr, true, true );
-
+    
+    gui_items.addd("eye_auto", "edit_auto_pass", GUIitem::ItemType::panel , _FRAME(135, 9, 14, 10), gui_items.textura_list.get_textura_by_id("eye"), true, true );
+    gui_items.addd("eye_auto_active", "edit_auto_pass", GUIitem::ItemType::panel , _FRAME(135, 9, 14, 10), gui_items.textura_list.get_textura_by_id("eye_active"), false, true );  
     
     gui_items.addd("checkbox", "panel_autorun", GUIitem::ItemType::checkbox, _FRAME(25, 174, 18, 18), gui_items.textura_list.get_textura_by_id("checkbox"), true, true );
     gui_items.addd("checkbox_set", "panel_autorun", GUIitem::ItemType::checkbox, _FRAME(25, 174, 18, 18), gui_items.textura_list.get_textura_by_id("checkbox_set"), false, true );
     
-    gui_items.addd("btn_connect_normal", "panel_incoming", GUIitem::ItemType::panel, _FRAME(12, 162, 212, 46), gui_items.textura_list.get_textura_by_id("btn_connect_normal"), true, true );
-    gui_items.addd("btn_connect_pressed", "panel_incoming", GUIitem::ItemType::panel, _FRAME(12, 162, 212, 46), gui_items.textura_list.get_textura_by_id("btn_connect_pressed"), false, true );
+    gui_items.addd("btn_connect_normal", "panel_outgoing", GUIitem::ItemType::panel, _FRAME(12, 162, 212, 46), gui_items.textura_list.get_textura_by_id("btn_connect_normal"), true, true );
+    gui_items.addd("btn_connect_pressed", "panel_outgoing", GUIitem::ItemType::panel, _FRAME(12, 162, 212, 46), gui_items.textura_list.get_textura_by_id("btn_connect_pressed"), false, true );
 
-    gui_items.addd("btn_www_normal", "panel_outgoing", GUIitem::ItemType::panel, _FRAME(60, 175, 114, 14), gui_items.textura_list.get_textura_by_id("btn_www_normal"), true, true );
-    gui_items.addd("btn_www_pressed", "panel_outgoing", GUIitem::ItemType::panel, _FRAME(60, 175, 114, 14), gui_items.textura_list.get_textura_by_id("btn_www_pressed"), false, true );
+    gui_items.addd("btn_www_normal", "panel_incoming", GUIitem::ItemType::panel, _FRAME(60, 175, 114, 14), gui_items.textura_list.get_textura_by_id("btn_www_normal"), true, true );
+    gui_items.addd("btn_www_pressed", "panel_incoming", GUIitem::ItemType::panel, _FRAME(60, 175, 114, 14), gui_items.textura_list.get_textura_by_id("btn_www_pressed"), false, true );
     
     gui_items.addd("btn_save_normal", "panel_autorun", GUIitem::ItemType::panel, _FRAME(102, 162, 122, 46), gui_items.textura_list.get_textura_by_id("btn_save_normal"), true, true );
     gui_items.addd("btn_save_pressed", "panel_autorun", GUIitem::ItemType::panel, _FRAME(102, 162, 122, 46), gui_items.textura_list.get_textura_by_id("btn_save_pressed"), false, true );

@@ -74,7 +74,34 @@ public:
                 printf("null\n");
                 return;
             }
-            
+            if(item->id == "eye_out") {
+                item->is_visible = false;
+                gui_items.get_item_by_id("eye_out_active")->is_visible = true;
+                gui_items.get_item_by_id("edit_out_pass")->is_visible_pass = true;                
+                window->need_refresh();
+                return;
+            }
+            if(item->id == "eye_out_active") {
+                item->is_visible = false;
+                gui_items.get_item_by_id("eye_out")->is_visible = true;
+                gui_items.get_item_by_id("edit_out_pass")->is_visible_pass = false;
+                window->need_refresh();
+                return;
+            }
+            if(item->id == "eye_auto") {
+                item->is_visible = false;
+                gui_items.get_item_by_id("eye_auto_active")->is_visible = true;
+                gui_items.get_item_by_id("edit_auto_pass")->is_visible_pass = true;
+                window->need_refresh();
+                return;
+            }
+            if(item->id == "eye_auto_active") {
+                item->is_visible = false;
+                gui_items.get_item_by_id("eye_auto")->is_visible = true;
+                gui_items.get_item_by_id("edit_auto_pass")->is_visible_pass = false;
+                window->need_refresh();
+                return;
+            }
             if(item->id == "btn_out_w") {
                 change_panel_to_out();
                 return;
@@ -165,6 +192,7 @@ public:
             if(gui_items.get_item_by_id("btn_save_pressed")->is_visible == true) {
                 gui_items.get_item_by_id("btn_save_pressed")->is_visible = false;
                 gui_items.get_item_by_id("btn_save_normal")->is_visible = true;
+                window->need_refresh();
                 return;
             }
             return;

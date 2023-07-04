@@ -69,19 +69,19 @@ public:
     FONT(const FONT& orig) = delete;
     FONT(FONT&& src) noexcept {
         *this = std::move(src);
-        printf("FONT constructor move\n");
+        //printf("FONT constructor move\n");
     }
     FONT& operator=( FONT& src) = delete;
     FONT& operator=( FONT&& src) noexcept {
-        printf("FONT = move\n");
+        //printf("FONT = move\n");
         if(&src == this) return *this;
         copy_from_(src);
         clear_(src);
         return *this;
     }
-    void print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, uint32_t color, int cursor_pos);
-    void print(SCREEN_BUFFER *scr, int x, int y, std::wstring& text, uint32_t color, int cursor_pos) {
-        print(scr, x, y, text.c_str(), color, cursor_pos);
+    void print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, bool is_pass, uint32_t color, int cursor_pos);
+    void print(SCREEN_BUFFER *scr, int x, int y, std::wstring& text, bool is_pass, uint32_t color, int cursor_pos) {
+        print(scr, x, y, text.c_str(), is_pass, color, cursor_pos);
     }
     int letter_height(LETTER& lt);
     int text_height(const wchar_t* text);

@@ -66,18 +66,19 @@ public:
     std::wstring edit_text;
     int edit_text_cursor_pos;
     bool is_edit_begin;
+    bool is_visible_pass;
     
     GUItextura *textura = nullptr;
     GUIitem(const char* item_id,  const char* parent_id, ItemType type, _FRAME frame, GUItextura *textura, bool is_visible, bool is_active) : id(item_id), parent_id(parent_id), type(type), frame(frame), textura(textura), is_visible(is_visible), is_active(is_active)
-    , edit_text(L""), edit_text_cursor_pos(-1), is_edit_begin(false) { };
+    , edit_text(L""), edit_text_cursor_pos(-1), is_edit_begin(false), is_visible_pass(false) { };
     GUIitem(const GUIitem& src) = delete;
     GUIitem(GUIitem&& src) noexcept {
         *this = std::move(src);
-        printf("FONT constructor move\n");        
+        //printf("GUIitem constructor move\n");
     }
     GUIitem& operator=(const GUIitem& src) = delete;
     GUIitem& operator=(GUIitem&& src) {
-        printf("FONT = move\n");
+        //printf("GUIitem = move\n");
         if(&src == this) return *this;
         copy_from_(src);
         clear_(src);
@@ -95,7 +96,7 @@ public:
         edit_text  = src.edit_text;
         edit_text_cursor_pos = src.edit_text_cursor_pos;
         is_edit_begin = src.is_edit_begin;
-
+        is_visible_pass = src.is_visible_pass;
     }
     void clear_(GUIitem& src) {
         src.id = "";
@@ -109,6 +110,7 @@ public:
         src.edit_text = L"";
         src.edit_text_cursor_pos = -1;
         src.is_edit_begin = false;
+        src.is_visible_pass = false;
     }
     bool its_my(int x, int y) {
         int xx = get_gx(), yy = get_gy();
