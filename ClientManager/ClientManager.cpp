@@ -25,7 +25,7 @@ ClientManager::~ClientManager() {
 }
 
 void ClientManager::run() {
-    printf("ClientManager run\n");
+    printf("----ClientManager run\n");
     
     RECTANGLE rec(10, 10, 250, 344, 0, 255);
     InitGUIitems();
@@ -34,25 +34,25 @@ void ClientManager::run() {
     window->StaticUserInput = ClientManager::StaticUserInput;
     window->test();
     
+    gui_items.set_GUIwindow(window);
+    
     gui->test();
 }
 
 void ClientManager::exit() {
-    window->exit();
+
 }
 
 void ClientManager::stop() {
-    if(window) {
-        window->stop();
-    }
+
 }
 
 void ClientManager::wait() {
-    if(!window) return;
-    while(window->execute_is_run) {
-        sleep_();
+    while(need_stop == false) {
+        sleep_();        
     }
 }
+
 
 void ClientManager::init_textures() {
     

@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <string>
+#include <mutex>
 
 
 #include "GUIwindow.h"
@@ -61,6 +62,8 @@ public:
         src.id = 0;
         src.window.reset();
     }
+    
+       
     virtual ~GUIwindowListElement() {
         
     }
@@ -74,6 +77,12 @@ public:
     std::vector<GUIwindowListElement> window_list;
     
     GUIwindow* CreateWindow_(std::string name, GUIwindow::window_mode mode, RECTANGLE rectangle, GUIitems* gui_items, void* parent);
+    
+    std::mutex g_mutex;
+    
+
+    void stop();
+    void wait();
     
     GUIwindowList(GUI *gui);
     GUIwindowList(const GUIwindowList& orig) = delete;

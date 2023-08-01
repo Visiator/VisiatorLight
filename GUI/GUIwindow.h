@@ -21,7 +21,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
-#include <X11/extensions/XTest.h>
+//#include <X11/extensions/XTest.h>
 #endif
 
 #ifdef _WIN32
@@ -61,8 +61,12 @@ public:
     
     GUI *gui;
 #ifdef __linux__
+    Display     *linux_display = nullptr;
+    int         linux_screen_id = 0;
+    GC gc;
     Window window;
     XImage *image;
+    Atom wm_delete;
 #endif
 
 #ifdef _WIN32
@@ -120,7 +124,9 @@ public:
     std::string name;
     GUIwindow::window_mode mode;
     RECTANGLE rectangle;
-    bool need__stop;
+    
+    int scr_cr = 0;
+    
     std::unique_ptr<SCREEN_BUFFER> screen;
     GUIitems* gui_items = nullptr;
     
@@ -133,14 +139,20 @@ public:
         mode       = src.mode;
         gui        = src.gui; 
         rectangle  = src.rectangle;
-        need__stop = src.need__stop;
+        need_stop  = src.need_stop;
         screen     = std::move(src.screen);
         gui_items  = src.gui_items;
         parent     = src.parent;
         StaticUserInput = src.StaticUserInput;
+        
+
 #ifdef __linux__
-        window     = src.window;
-        image      = src.image;
+        linux_display   = src.linux_display;
+        linux_screen_id = src.linux_screen_id;
+        window          = src.window;
+        image           = src.image;
+        wm_delete       = src.wm_delete;
+        gc              = src.gc;
 #endif
 #ifdef _WIN32
         bmInfo     = std::move(src.bmInfo);
@@ -153,13 +165,19 @@ public:
         src.name = "";
         src.mode = window_mode::NOTSET;
         src.gui = nullptr;
+        src.need_stop  = false;
         src.screen = nullptr;
         src.gui_items = nullptr;
         src.parent = nullptr;
         src.StaticUserInput = nullptr;
+
 #ifdef __linux__
-        src.window     = 0;
-        src.image      = nullptr;
+        src.window          = 0;
+        src.image           = nullptr;
+        src.wm_delete       = 0;
+        src.linux_display   = nullptr;
+        src.linux_screen_id = 0;
+        src.gc              = 0;
 #endif
 #ifdef _WIN32
         src.bmInfo = nullptr;
@@ -170,8 +188,7 @@ public:
     void need_refresh();
     void test();
     void run();
-    void stop();
-    void exit();
+    //void exit();
     
     GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RECTANGLE rectangle, GUIitems* gui_items, void* parent);
     GUIwindow( GUIwindow& orig) = delete;
@@ -189,15 +206,29 @@ public:
         return *this;
     }
     
+
+    bool need_stop;
+    void set_need_stop() {
+        printf("set need stop\n");
+        need_stop = true;
+    }
     bool execute_is_run = false;
     std::thread* execute_thread = nullptr;
     void execute();
     
+    bool window_close();
     void event_paint();
+    
+    void set_size(int w, int h);
     
     void event_resize(uint32_t width, uint32_t height);
     
     virtual ~GUIwindow() {
+#ifdef __linux__
+        XFreeGC (linux_display, gc);
+        XCloseDisplay(linux_display);
+        linux_display = nullptr;
+#endif
         printf("GUIwindow destructor\n");
     }
 private:

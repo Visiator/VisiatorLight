@@ -27,13 +27,17 @@
 #include <stdio.h>
 #include <cstdlib>
 
+
+#include "NET/NET.h"
 #include "GUI/GUIlowlevel.h"
 #include "GUI/GUI.h"
 #include "ClientManager/ClientManager.h"
 #include "Viewer.h"
 
-std::unique_ptr<ClientManager> clientManager;
-std::unique_ptr<Viewer> viewer;
+
+std::unique_ptr<ClientManager> g_ClientManager;
+std::unique_ptr<Viewer> g_Viewer;
+
 
 #ifdef __linux__
 void _start_();
@@ -54,10 +58,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 }
 #endif
 
-
+int g_1 = 0;
 
 #ifdef __linux__
+
+//void *SigCatcher(int n)
+//{
+//  wait3(NULL,WNOHANG,NULL);
+//}
+
+
+
 int main(int argc, char** argv) {
+    
+    //boost::array<int, 4> arr = {{1,2,3,4}};
+    
+    //signal(SIGCHLD,SigCatcher);
+    
     printf("main\n");
     
     _start_();
@@ -65,6 +82,7 @@ int main(int argc, char** argv) {
 }
 void _start_() {
 #endif
+    
 #ifdef _WIN32
 void _start_(HINSTANCE hInstance) {
 #endif    
@@ -75,20 +93,25 @@ void _start_(HINSTANCE hInstance) {
 #ifdef _WIN32
     gui->hInstance = hInstance;
 #endif    
-    clientManager = std::make_unique<ClientManager>(gui);
-    viewer = std::make_unique<Viewer>(gui);
+    //g_Net = std::make_unique<NET>();
+    g_ClientManager = std::make_unique<ClientManager>(gui);
+    g_Viewer = std::make_unique<Viewer>(gui);
     
-    clientManager->run();
+    g_ClientManager->run();
     //clientManager.reset();
     
-    viewer->run();
+    g_Viewer->start();
     
-    clientManager->wait();
+    //g_ClientManager->wait();
+    //g_Viewer->wait();
     
-    clientManager->stop();
+    //g_ClientManager->stop();
+    //g_Viewer->stop();
     
-    //gui.reset();
     
+    gui->window_list->wait();
+    //g_Net->set_need_stop();
+    //g_Net->wait_stop();
     printf("stop\n");
     return;
 }

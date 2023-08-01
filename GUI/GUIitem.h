@@ -14,13 +14,19 @@
 #define GUIITEM_H
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "GUIprimitives.h"
+#include "GUIscreenBuffer.h"
 #include "GUItextura.h"
+#include "GUIwindow.h"
 
 class WindowUserEvent;
+class GUIwindow;
+class GUItextura;
+class GUIitems;
 
 class GUIitem {
 private:
@@ -61,16 +67,19 @@ public:
         , editid = 5
         , editpass16 = 6
         , checkbox = 7
+        , viewer = 8          
     };
     ItemType type;
     std::wstring edit_text;
     int edit_text_cursor_pos;
     bool is_edit_begin;
     bool is_visible_pass;
-    
+    GUIwindow* window;
+    std::unique_ptr<SCREEN_BUFFER> screen_buf;
+    void need_refresh();
     GUItextura *textura = nullptr;
-    GUIitem(const char* item_id,  const char* parent_id, ItemType type, _FRAME frame, GUItextura *textura, bool is_visible, bool is_active) : id(item_id), parent_id(parent_id), type(type), frame(frame), textura(textura), is_visible(is_visible), is_active(is_active)
-    , edit_text(L""), edit_text_cursor_pos(-1), is_edit_begin(false), is_visible_pass(false) { };
+    GUIitems* items = nullptr;
+    GUIitem(GUIitems* items, const char* item_id,  const char* parent_id, ItemType type, _FRAME frame, GUItextura *textura, bool is_visible, bool is_active);
     GUIitem(const GUIitem& src) = delete;
     GUIitem(GUIitem&& src) noexcept {
         *this = std::move(src);
@@ -85,8 +94,9 @@ public:
         return *this;
     }
     void copy_from_(GUIitem& src) {
+        items      = src.items;
         is_visible = src.is_visible;
-        is_active = src.is_active;
+        is_active  = src.is_active;
         id         = src.id;
         type       = src.type;
         frame      = src.frame;
@@ -97,8 +107,11 @@ public:
         edit_text_cursor_pos = src.edit_text_cursor_pos;
         is_edit_begin = src.is_edit_begin;
         is_visible_pass = src.is_visible_pass;
+        window     = src.window;
+        screen_buf   = std::move( src.screen_buf );
     }
     void clear_(GUIitem& src) {
+        src.items = nullptr;
         src.id = "";
         src.type = ItemType::notset;
         src.frame.clear();
@@ -111,6 +124,8 @@ public:
         src.edit_text_cursor_pos = -1;
         src.is_edit_begin = false;
         src.is_visible_pass = false;
+        src.window = nullptr;
+        src.screen_buf.reset();
     }
     bool its_my(int x, int y) {
         int xx = get_gx(), yy = get_gy();
@@ -120,6 +135,9 @@ public:
         }
         return false;
     }
+    
+    void arrived_screen(SCREEN_BUFFER *src);
+    
     void UserInput(WindowUserEvent* window_user_event);
     ~GUIitem() {
         
@@ -131,12 +149,15 @@ private:
 public:
     GUItexturaList textura_list;
     std::vector<GUIitem> items;
-    
+    GUIwindow* gui_window;
+    void set_GUIwindow(GUIwindow* w) {
+        gui_window = w;
+    }
     bool addd(const char *item_id, const char *parent_id, GUIitem::ItemType type, _FRAME&& frame, GUItextura* textura, bool is_visible, bool is_active) {
                
         //GUIitem a(item_id, GUIitem::ItemType::panel, frame, textura);
         
-        items.push_back( {item_id, parent_id, type, frame, textura, is_visible, is_active} );
+        items.push_back( {this, item_id, parent_id, type, frame, textura, is_visible, is_active} );
         return true;
     }
     GUIitem* get_item_by_id(std::string& id) {
@@ -175,7 +196,7 @@ public:
         }
         return nullptr;
     }
-    GUIitems() {
+    GUIitems() : gui_window(nullptr) {
         
     }
     GUIitems(const GUIitems& src) = delete;

@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 
+
 #include "../tools.h"
 #include "GUIwindow.h"
 #include "GUI.h"
@@ -97,7 +98,7 @@ Pixmap nIconPixmap /*Рисунок пиктограммы */
         puts ( "No memory!\n");
         exit ( 1 );
     }
-    rSizeHints.flags = PPosition | PSize | PMinSize | PMaxSize;
+    rSizeHints.flags = PPosition | PSize | PMinSize ;//| PMaxSize;
     rSizeHints.min_width = nMinWidth;
     rSizeHints.min_height = nMinHeight;
 
@@ -119,8 +120,9 @@ Pixmap nIconPixmap /*Рисунок пиктограммы */
 #endif
 
 GUIwindow::GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RECTANGLE rectangle, GUIitems* gui_items, void* parent) : gui(gui), name(name), mode(mode), rectangle(rectangle), gui_items(gui_items), parent(parent)
-, need__stop(false)
+, need_stop(false)
 , screen(std::make_unique<SCREEN_BUFFER>(&gui->fonts))
+, execute_is_run(true)
 #ifdef __linux__
 , window(0)
 , image(nullptr)
@@ -132,16 +134,27 @@ GUIwindow::GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RE
 #endif
 
 {
+    
+    
     printf("GUIwindow constructor 1-1 [%s][%d]\n", name.c_str(), mode);
 
     screen->set_size(rectangle.getw(), rectangle.geth());
     
 #ifdef __linux__    
-    window = XCreateSimpleWindow(gui->linux.display_
-                                 , RootWindow(gui->linux.display_, gui->linux.screen_id)
+    
+    if ((linux_display = XOpenDisplay(getenv("DISPLAY"))) == NULL) {
+        wtf("Can't connect X server");//, strerror(errno));
+        return;
+    }
+    linux_screen_id = XDefaultScreen(linux_display);
+    
+    XLockDisplay(linux_display);
+    
+    window = XCreateSimpleWindow(linux_display
+                                 , RootWindow(linux_display, linux_screen_id)
                                  , rectangle.getx(), rectangle.gety(), rectangle.getw(), rectangle.geth(), 10
-                                 , XBlackPixel(gui->linux.display_, gui->linux.screen_id)
-                                 , XWhitePixel(gui->linux.display_, gui->linux.screen_id)
+                                 , XBlackPixel(linux_display, linux_screen_id)
+                                 , XWhitePixel(linux_display, linux_screen_id)
                                 );
     
     /* эта переменная будет содержать дескриптор новой пиксельной карты */
@@ -155,10 +168,10 @@ GUIwindow::GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RE
     /* пиксельной карты - количество бит, используемых для   */
     /* представления индекса цвета в палитре (количество цветов */
     /* равно степени двойки глубины)              */
-    int depth = DefaultDepth(gui->linux.display_, DefaultScreen(gui->linux.display_));
+    int depth = DefaultDepth(linux_display, DefaultScreen(linux_display));
 
     /* создаем новую пиксельную карту шириной 30 и высотой в 40 пикселей */
-    pixmap = XCreatePixmap(gui->linux.display_, window, 16, 16, depth);
+    pixmap = XCreatePixmap(linux_display, window, 16, 16, depth);
 
     /* для полноты ощущений нарисуем точку в центре пиксельной карты */
     //XDrawPoint(gui->linux.display_, pixmap, gc, 15, 20);    
@@ -166,19 +179,20 @@ GUIwindow::GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RE
     
     char *argv_[] = {(char *)"Visiator", (char *)"", NULL};
     /* Задаем рекомендации для менеджера окон */
-    SetWindowManagerHints ( gui->linux.display_, (char *)"Visiator",
+    
+    SetWindowManagerHints ( linux_display, (char *)"Visiator",
     argv_, 1,
     window, rectangle.getx(), rectangle.gety(), rectangle.getw(), rectangle.geth(),
     rectangle.getw(), rectangle.geth(),
     (char *)"WND_TITLE", (char *)"WND_ICON_TITLE", pixmap
     );
     
-    gui->linux.graph_ctx=XCreateGC(gui->linux.display_, window, 0, gui->linux.gc_values);
+    //gui->linux.graph_ctx=XCreateGC(linux_display, window, 0, gui->linux.gc_values);
     
     image = XCreateImage(
-            gui->linux.display_, 
-            DefaultVisual(gui->linux.display_, DefaultScreen(gui->linux.display_)),
-            DefaultDepth(gui->linux.display_, DefaultScreen(gui->linux.display_)),
+            linux_display, 
+            DefaultVisual(linux_display, DefaultScreen(linux_display)),
+            DefaultDepth(linux_display, DefaultScreen(linux_display)),
             ZPixmap,
             0,
             (char*) screen->buffer,
@@ -186,6 +200,20 @@ GUIwindow::GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RE
             rectangle.geth(),
             32,
             (rectangle.getw())*4 );
+    
+    
+    XSelectInput(linux_display, window, ExposureMask | StructureNotifyMask | KeyPressMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask );
+    //Показываем окно на экране
+    XMapWindow(linux_display, window);
+    wm_delete = XInternAtom(linux_display, "WM_DELETE_WINDOW", True);
+    XSetWMProtocols(linux_display, window, &wm_delete, 1);
+    
+    gc = XCreateGC (linux_display, window, 0, 0);
+    
+    XUnlockDisplay(linux_display);
+    
+    //gui_items->set_GUIwindow(this);
+    
 #endif
 
 #ifdef _WIN32
@@ -201,6 +229,8 @@ GUIwindow::GUIwindow(GUI *gui, std::string name, GUIwindow::window_mode mode, RE
     bmInfo->bmiHeader.biWidth = rectangle.getw();
 #endif
 
+    
+    execute_thread = new std::thread(&GUIwindow::execute, this);
 }
 
 void GUIwindow::run() {
@@ -213,216 +243,8 @@ void GUIwindow::run() {
             printf("run() OK get() \n");
         }
     }
-    execute_is_run = true;
-    execute_thread = new std::thread(&GUIwindow::execute, this);
-}
-
-
-void GUIwindow::execute() { 
-
-#ifdef __linux__    
-    GC prGC;
-    XEvent      exppp;
-    XEvent      event;
-    
-    XSelectInput(gui->linux.display_, window, ExposureMask | StructureNotifyMask | KeyPressMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask );
-     
-    //Показываем окно на экране
-    XMapWindow(gui->linux.display_, window);
-    
-    
-    while(need__stop == false) {
-        
-            if (XPending(gui->linux.display_)) 
-            {
-                try {
-                    XNextEvent(gui->linux.display_, &event);
-                } catch(...) {
-                    printf("catch 1\n");
-                }
-                
-                if (event.type == Expose) // Перерисовываем окно
-                {
-                    
-                    //XDrawString (linux.display, linux.window, linux.graph_ctx, 50, 50, msg, strlen (msg));
-                    
-                    
-                } else {
-                    
-                }
-
-                
-                switch (event.type) 
-                {
-                    case Expose:
-                        event_paint();
-                        /* Запрос на перерисовку */
-                        if (event.xexpose.count != 0) break;
-                        prGC = XCreateGC(gui->linux.display_, window, 0, nullptr);
-                        /*XSetForeground ( prDisplay, prGC, BlackPixel ( prDisplay, 0) );
-                        XDrawString ( prDisplay, nWnd, prGC, 10,
-                        50,
-                        "Hello,
-                        world!",
-                        strlen
-                        world!" ) );*/
-                        XPutImage(gui->linux.display_, window, gui->linux.graph_ctx, image, 0, 0, 0, 0, screen->w, screen->h);//DISPLAY_WIDTH, DISPLAY_HEIGHT);
-                        XFreeGC ( gui->linux.display_, prGC );
-                        
-                        
-                        
-                    
-                        //XSetForeground (gui->linux.display_, gui->linux.graph_ctx, 0x337700);
-                        //printf("Expose\n");
-                        break;
-                    case ConfigureNotify:
-                        if(event.xconfigure.width != screen->w || 
-                           event.xconfigure.height != screen->h) {
-                            
-                            screen->set_size( event.xconfigure.width, event.xconfigure.height);
-                            image->data = (char *)screen->buffer;
-                            image->bytes_per_line = screen->w*4;
-                            image->width = screen->w;
-                            image->height = screen->h;
-                            //screen->fill_all(0x117777);
-                            
-                            event_resize(screen->w, screen->h);
-                            
-                            printf("1 %d : %d - %d : %d\n", 
-                                    event.xconfigure.x,
-                                    event.xconfigure.y,
-                                    event.xconfigure.width,
-                                    event.xconfigure.height );
-                            memset(&exppp, 0, sizeof(exppp));
-                            exppp.type = Expose;
-                            exppp.xexpose.window = window;
-                            XSendEvent(gui->linux.display_, window, False, ExposureMask, &exppp);
-                        }
-                        break;
-                    case ReparentNotify:
-                        printf("12\n");
-                        break;
-                    case MapNotify:
-                        printf("13\n");
-                        break;
-                    case MotionNotify:
-                        //printf("14\n");
-                        break;
-                    case ClientMessage:
-                        printf("15\n");
-                        break;
-                    case DestroyNotify:
-                        printf("16\n");
-                        break;
-                    case ButtonPress:
-                        printf("17\n");
-                        window_user_event.type = WindowUserEvent::UserEventType::uev_MousePress;
-                        window_user_event.x = event.xbutton.x;
-                        window_user_event.y = event.xbutton.y;
-                        StaticUserInput(parent, &window_user_event);
-                        break;
-                    case KeyPress:
-                        printf("18\n");
-                        window_user_event.type = WindowUserEvent::UserEventType::uev_KeyPress;
-                        window_user_event.keycode = event.xkey.keycode;
-                        StaticUserInput(parent, &window_user_event);
-                        break;
-                    case ButtonRelease:
-                        //printf("19\n");
-                        window_user_event.type = WindowUserEvent::UserEventType::uev_MouseUnpress;
-                        window_user_event.x = event.xbutton.x;
-                        window_user_event.y = event.xbutton.y;
-                        StaticUserInput(parent, &window_user_event);
-                        break;
-                    default: 
-                        printf("other\n");
-                }
-                
-            }
-            else
-            {
-                if(1==1 && need__stop == false) {
-                    //screen.need_update = false;
-                    memset(&exppp, 0, sizeof(exppp));
-                    exppp.type = Expose;
-                    exppp.xexpose.window = window;
-                    XSendEvent(gui->linux.display_, window, False, ExposureMask, &exppp);
-                }
-                usleep(10);
-            }
-        
-        
-        sleep_();
-    }
-    execute_is_run = false;
-#endif
-
-#ifdef _WIN32
-    int err;
-    HICON hi = nullptr;
-	HICON hi_sm = nullptr;
-	//hi_sm = LoadIcon(app_attributes.hInstance, MAKEINTRESOURCE(101));
-
-	WNDCLASSEX wc;
-	ZeroMemory(&wc, sizeof(WNDCLASSEX));
-	wc.style = CS_HREDRAW | CS_VREDRAW | CS_BYTEALIGNCLIENT | CS_BYTEALIGNWINDOW;
-	wc.cbSize = sizeof(WNDCLASSEX);
-	wc.lpfnWndProc = GUIwindow::WindowProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hInstance = gui->hInstance;
-	wc.hIcon = hi_sm; //  LoadIcon(app_attributes.hInstance, MAKEINTRESOURCE(1055));
-	wc.hIconSm = nullptr; // LoadIcon(app_attributes.hInstance, MAKEINTRESOURCE(101));
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)(6);
-	wc.lpszMenuName = NULL;
-	wc.lpszClassName = L"ClientManager";
-
-	if (!RegisterClassEx(&wc)) {
-		fatal_error("RegisterClass error");
-		return;
-	};
-        
-    int x, y, w, h;
-    x = rectangle.getx(); y = rectangle.gety(); w = rectangle.getw(); h = rectangle.geth();
-    printf("CreateWindow %d %d\n", w, h);
-    gui->win32_param.p1 = 1001;
-    screen->set_size(rectangle.getw(), rectangle.geth());
-    viewer_window_hwnd = CreateWindow( L"ClientManager",  L"ClientManager", WS_POPUP, 100, 100, w, h, NULL, NULL, gui->hInstance, this);
-	//app_attributes.desktop_window_hwnd = CreateWindowEx( 0, L"VISIATOR VIEWER", L"VISIATOR", WS_OVERLAPPEDWINDOW, x, y, w, h, NULL, NULL, app_attributes.hInstance, NULL);
-
-	if (!viewer_window_hwnd) {
-        err = GetLastError();
-		fatal_error("CreateWindow error");
-		return;
-	};
-    printf("11111 %x %s\n", viewer_window_hwnd, this->name.c_str());
-        
-    ShowWindow(viewer_window_hwnd, SW_SHOWNORMAL);
-    UpdateWindow(viewer_window_hwnd);
-        
-    MSG msg;
-    printf("w1\n");
-
-    //timer();
-    while (GetMessage(&msg, NULL, 0, 0) > 0) {
-    
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    execute_is_run = false;
-#endif
 
 }
-
-void GUIwindow::stop() {
-    need__stop = true;
-    while(execute_is_run == true) {
-        sleep_();
-    }
-}
-
 
 void GUIwindow::test() {
     printf("GUIwindow::test()\n");
@@ -442,7 +264,7 @@ LRESULT CALLBACK GUIwindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pThis);
 
         pThis->m_hwnd = hwnd;
-        printf("set m_hwnd {%s}\n", pThis->name.c_str());
+        printf("--------------set m_hwnd {%s}\n", pThis->name.c_str());
     }
     else
     {
@@ -461,7 +283,7 @@ LRESULT CALLBACK GUIwindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 
 LRESULT GUIwindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
-    //printf("HandleMessage [%d]\n", uMsg);
+    printf("HandleMessage [%d]\n", uMsg);
 
     switch (uMsg)
     {
@@ -504,6 +326,7 @@ LRESULT GUIwindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case WM_SIZE:				return WM_SIZE_(m_hwnd, uMsg, wParam, lParam);
         case WM_LBUTTONDOWN:                    return WM_LBUTTONDOWN_(m_hwnd, uMsg, wParam, lParam);
         case WM_LBUTTONUP:                      return WM_LBUTTONUP_(m_hwnd, uMsg, wParam, lParam);
+        case WM_KEYDOWN:                        return WM_KEYDOWN_(m_hwnd, uMsg, wParam, lParam);
         default:
             //printf("HandleMessage +def %d\n", uMsg);
             return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
@@ -627,7 +450,7 @@ LRESULT GUIwindow::WM_NCHITTEST_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
         printf("AAA");
         return HTCLIENT;
     }
-    printf("nnn %d %d\n", mx, my);
+    //printf("nnn %d %d\n", mx, my);
     return HTCAPTION;
 }
 LRESULT GUIwindow::WM_GETMINMAXINFO_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
@@ -712,16 +535,24 @@ LRESULT GUIwindow::WM_PAINT_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
 
 LRESULT GUIwindow::WM_KEYDOWN_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
 
+    printf("18\n");
+    
     wchar_t wbuffer[8];
     BYTE lpKeyState[256];
     GetKeyboardState(lpKeyState);
+    
     if(ToUnicode(wp, HIWORD(lp) & 0xFF, lpKeyState, wbuffer, 8, 0) == 1) {
+        
         window_user_event.type = WindowUserEvent::UserEventType::uev_KeyPress;
         window_user_event.keycode = wbuffer[0];
         StaticUserInput(parent, &window_user_event);    
     } else {
         printf("ToUnicode error\n");
+        window_user_event.type = WindowUserEvent::UserEventType::uev_KeyPress;
+        window_user_event.keycode = convert_key_from_w32(wp);
+        StaticUserInput(parent, &window_user_event);    
     }
+    need_refresh();
     
     
     
@@ -732,8 +563,261 @@ LRESULT GUIwindow::WM_KEYDOWN_(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
 
 #endif // w32
 
+void GUIwindow::event_resize(uint32_t width, uint32_t height) {
+    printf("event_resize() %d:%d\n", width, height);
+    this->rectangle.w = width;
+    this->rectangle.h = height;
+    screen->set_size(width, height);
+    for(int i=0; i < gui_items->items.size(); i++) {
+        if(gui_items->items[i].type == GUIitem::ItemType::viewer) {
+            gui_items->items[i].frame.w = width;
+            gui_items->items[i].frame.h = height;
+            gui_items->items[i].screen_buf.get()->lock(5000);
+            gui_items->items[i].screen_buf.get()->set_size(width, height);
+            gui_items->items[i].screen_buf.get()->unlock(5000);
+        }
+    }
+    
+    
+}
+
+
+
+void GUIwindow::event_paint() {
+    screen->fill_all(0x773377);
+    screen->line_h(10, 10, 50, 0xff00aa);
+    screen->line_h(screen->w-50, screen->h-1, 40, 0xff00aa);
+    //screen->print(gui->fonts.roboto220, 50, 50, L"123При");
+    
+    screen->paint_items(gui_items);
+    //void print(SCREEN_BUFFER *scr, int x, int y, const wchar_t *text, bool is_pass, uint32_t color, int cursor_pos);
+    std::wstring w;
+    w = L"(" + std::to_wstring(scr_cr++) + L")";
+    screen->fonts->roboto150->print(screen.get(), 50, 50, w, false, 0xff00, -1 );
+}
+
+/*void GUIwindow::exit() {
+    printf("exit()\n");
+#ifdef __linux__
+    XFreeGC (linux_display, gc);
+    XDestroyWindow(linux_display, window);
+#endif
+#ifdef _WIN32
+    PostQuitMessage(0);
+#endif
+}*/
+
+
+bool GUIwindow::window_close() {
+    
+    return true;
+}
+
+void GUIwindow::execute() {
+
+    
+#ifdef __linux__
+    XEvent event;
+    XEvent exppp;
+    
+    while(need_stop == false) {
+        int ff = 0;
+        try
+        {
+            XLockDisplay(linux_display);
+            if (XPending(linux_display)) {
+                ff = 1;
+            }
+            XUnlockDisplay(linux_display);
+        }
+        catch(...)
+        {
+            printf("wtf?");
+        };
+        
+        if(ff == 1)
+        {
+            try 
+            {
+                XLockDisplay(linux_display);
+                XNextEvent(linux_display, &event);
+                XUnlockDisplay(linux_display);
+            } catch(...) {
+                printf("catch 1\n");
+            }
+            
+            switch (event.type) 
+            {
+                case Expose:
+                    event_paint();
+
+                    XLockDisplay(linux_display);
+                    XPutImage(linux_display, window, gc, image, 0, 0, 0, 0, screen->w, screen->h);//DISPLAY_WIDTH, DISPLAY_HEIGHT);
+                    XUnlockDisplay(linux_display);
+
+
+                    break;
+                case ConfigureNotify:
+                    if(event.xconfigure.width != screen->w || 
+                       event.xconfigure.height != screen->h) {
+
+                        screen->set_size( event.xconfigure.width, event.xconfigure.height);
+                        image->data = (char *)screen->buffer;
+                        image->bytes_per_line = screen->w*4;
+                        image->width = screen->w;
+                        image->height = screen->h;
+                        //screen->fill_all(0x117777);
+
+                        event_resize(screen->w, screen->h);
+
+                        printf("1 %d : %d - %d : %d\n", 
+                                event.xconfigure.x,
+                                event.xconfigure.y,
+                                event.xconfigure.width,
+                                event.xconfigure.height );
+                        memset(&exppp, 0, sizeof(exppp));
+                        exppp.type = Expose;
+                        exppp.xexpose.window = window;
+                        XLockDisplay(linux_display);
+                        XSendEvent(linux_display, window, False, ExposureMask, &exppp);
+                        XUnlockDisplay(linux_display);
+                    }
+                    break;
+                case ReparentNotify:
+                    printf("12\n");
+                    break;
+                case MapNotify:
+                    printf("13\n");
+                    break;
+                case MotionNotify:
+                    //printf("14\n");
+                    break;
+                case ClientMessage:
+                    printf("15 ClientMessage\n");
+
+                    if (event.xclient.data.l[0] == wm_delete)
+                    {
+                        set_need_stop();
+                    }
+
+                    break;
+                case DestroyNotify:
+                    printf("DestroyNotify\n");
+                    break;
+                case ButtonPress:
+                    printf("17\n");
+                    window_user_event.type = WindowUserEvent::UserEventType::uev_MousePress;
+                    window_user_event.x = event.xbutton.x;
+                    window_user_event.y = event.xbutton.y;
+                    StaticUserInput(parent, &window_user_event);
+                    
+                    break;
+                case KeyPress:
+                    printf("18\n");
+                    window_user_event.type = WindowUserEvent::UserEventType::uev_KeyPress;
+                    window_user_event.keycode = convert_key_from_linux(event.xkey.keycode);
+                    StaticUserInput(parent, &window_user_event);
+                    
+                    break;
+                case ButtonRelease:
+                    //printf("19\n");
+                    window_user_event.type = WindowUserEvent::UserEventType::uev_MouseUnpress;
+                    window_user_event.x = event.xbutton.x;
+                    window_user_event.y = event.xbutton.y;
+                    StaticUserInput(parent, &window_user_event);
+                    break;
+                case UnmapNotify:
+                    printf("UnmapNotify\n");
+                    break;
+                default: 
+                    printf("other %d\n", event.type);
+            } 
+            
+        }
+        else
+        {
+            if(need_stop == false) {
+                /*XEvent      exppp;
+                XLockDisplay(linux_display);
+                memset(&exppp, 0, sizeof(exppp));
+                exppp.type = Expose;
+                exppp.xexpose.window = window;
+                XSendEvent(linux_display, window, False, ExposureMask, &exppp);
+                XUnlockDisplay(linux_display);*/
+            }
+            usleep(10);
+        }
+    
+        
+        sleep_();
+    }
+    execute_is_run = false;
+#endif
+
+#ifdef _WIN32
+    int err;
+    HICON hi = nullptr;
+	HICON hi_sm = nullptr;
+	//hi_sm = LoadIcon(app_attributes.hInstance, MAKEINTRESOURCE(101));
+
+	WNDCLASSEX wc;
+	ZeroMemory(&wc, sizeof(WNDCLASSEX));
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_BYTEALIGNCLIENT | CS_BYTEALIGNWINDOW;
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.lpfnWndProc = GUIwindow::WindowProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = gui->hInstance;
+	wc.hIcon = hi_sm; //  LoadIcon(app_attributes.hInstance, MAKEINTRESOURCE(1055));
+	wc.hIconSm = nullptr; // LoadIcon(app_attributes.hInstance, MAKEINTRESOURCE(101));
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)(6);
+	wc.lpszMenuName = NULL;
+        std::wstring class_name = L"ClassName_";
+        for(int i=0;i<name.size();i++) class_name += name[i];
+	wc.lpszClassName = class_name.c_str();
+
+	if (!RegisterClassEx(&wc)) {
+                printf("RegisterClass error \n");
+		fatal_error("RegisterClass error");
+		return;
+	};
+        
+    int x, y, w, h;
+    x = rectangle.getx(); y = rectangle.gety(); w = rectangle.getw(); h = rectangle.geth();
+    printf("CreateWindow %d %d\n", w, h);
+    gui->win32_param.p1 = 1001;
+    screen->set_size(rectangle.getw(), rectangle.geth());
+    viewer_window_hwnd = CreateWindow( class_name.c_str(),  class_name.c_str(), WS_POPUP, 100, 100, w, h, NULL, NULL, gui->hInstance, this);
+	//app_attributes.desktop_window_hwnd = CreateWindowEx( 0, L"VISIATOR VIEWER", L"VISIATOR", WS_OVERLAPPEDWINDOW, x, y, w, h, NULL, NULL, app_attributes.hInstance, NULL);
+
+	if (!viewer_window_hwnd) {
+        err = GetLastError();
+		fatal_error("CreateWindow error++++++++++++++");
+		return;
+	};
+    printf("11111++++ %x %s\n", viewer_window_hwnd, this->name.c_str());
+        
+    ShowWindow(viewer_window_hwnd, SW_SHOWNORMAL);
+    UpdateWindow(viewer_window_hwnd);
+        
+    MSG msg;
+    printf("w1\n");
+
+    //timer();
+    while (GetMessage(&msg, NULL, 0, 0) > 0) {
+    
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    execute_is_run = false;
+#endif
+    
+}
+
 void GUIwindow::need_refresh() {
-    printf("printf\n");
+    
 #ifdef _WIN32
     RECT r;
     r.left = 0;
@@ -742,27 +826,27 @@ void GUIwindow::need_refresh() {
     r.bottom = 5000;
     InvalidateRect(viewer_window_hwnd, nullptr, FALSE);
 #endif
-}
-
-void GUIwindow::event_resize(uint32_t width, uint32_t height) {
-    screen->set_size(width, height);
+#ifdef __linux__  
+    XEvent      exppp;
+    XLockDisplay(linux_display);
+    memset(&exppp, 0, sizeof(exppp));
+    exppp.type = Expose;
+    exppp.xexpose.window = window;
+    XSendEvent(linux_display, window, False, ExposureMask, &exppp);
+    XUnlockDisplay(linux_display);
     
-}
-
-void GUIwindow::event_paint() {
-    screen->fill_all(0x773377);
-    screen->line_h(10, 10, 50, 0xff00aa);
-    screen->line_h(screen->w-50, screen->h-1, 40, 0xff00aa);
-    //screen->print(gui->fonts.roboto220, 50, 50, L"123При");
-    screen->paint_items(gui_items);
-}
-
-void GUIwindow::exit() {
-    printf("exit()\n");
-#ifdef __linux__
-    XDestroyWindow(gui->linux.display_, window);
 #endif
+}
+
+void GUIwindow::set_size(int w, int h) {
 #ifdef _WIN32
-    PostQuitMessage(0);
+
+#endif
+#ifdef __linux__
+    XLockDisplay(linux_display);
+    XResizeWindow(linux_display, window, w, h);
+    XSync(linux_display, False);
+    //XFlush(linux_display);
+    XUnlockDisplay(linux_display);
 #endif
 }

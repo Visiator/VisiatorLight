@@ -17,14 +17,14 @@
 #include <stdio.h>
 #include <cstdlib>
 
-class GUIlowlevel {
+/*class GUIlowlevel {
 public:
     GUIlowlevel();
     GUIlowlevel(const GUIlowlevel& orig);
     virtual ~GUIlowlevel();
 private:
 
-};
+};*/
 
 #endif /* GUILOWLEVEL_H */
 

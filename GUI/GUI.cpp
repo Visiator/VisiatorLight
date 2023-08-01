@@ -24,32 +24,39 @@
 #include "GUIprimitives.h"
 #include "../tools.h"
 
-GUI::GUI() : window_list(this) {
+GUI::GUI() {
     printf("GUI constructor1\n");
 
 #ifdef __linux__
-    if ((linux.display_ = XOpenDisplay(getenv("DISPLAY"))) == NULL) {
-        wtf("Can't connect X server");//, strerror(errno));
-        return;
-    }
-    linux.screen_id = XDefaultScreen(linux.display_);
+    //if ((linux.display_ = XOpenDisplay(getenv("DISPLAY"))) == NULL) {
+    //    wtf("Can't connect X server");//, strerror(errno));
+    //    return;
+    //}
+    //linux.screen_id = XDefaultScreen(linux.display_);
 #endif
+    
+     window_list = std::make_unique<GUIwindowList>(this);
+    
 }
 
 GUI::~GUI() {
     
     printf("GUI destructor\n");
 #ifdef __linux__
-    XCloseDisplay(linux.display_);
+    //XCloseDisplay(linux.display_);
 #endif
 }
 
 void GUI::test() {
+    
+    //execute_is_run = true;
+    //execute_thread = new std::thread(&GUIwindow::execute, this);
+    
     printf("GUI test\n");
 }
 
 GUIwindow* GUI::CreateWindow_(std::string name, GUIwindow::window_mode mode, RECTANGLE rectangle, GUIitems* gui_items, void* parent) {
     
-    return window_list.CreateWindow_(name, mode, rectangle, gui_items, parent);
+    return window_list->CreateWindow_(name, mode, rectangle, gui_items, parent);
 }
 

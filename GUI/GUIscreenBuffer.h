@@ -13,15 +13,128 @@
 #ifndef GUISCREENBUFFER_H
 #define GUISCREENBUFFER_H
 
-#include "../font/FONT.h"
-#include "GUIitem.h"
+#include <stdint.h>
+#include <vector>
+#include <mutex>
+
+//#include "../font/FONT.h"
+//#include "GUIitem.h"
+
+class FONTS;
+class FONT;
+class GUItextura;
+class GUIitems;
+class GUIitem;
+
+struct C8SH16 {
+	uint16_t c;
+	uint16_t s;
+};
+
+struct PAL {
+	uint8_t color;
+	uint16_t len;
+	uint32_t count;
+};
+
+struct PAL12 {
+	unsigned short color;
+	unsigned short len;
+	unsigned int   count;
+	unsigned int   sort;
+	PAL12() {
+		color = 0;
+		len = 0;
+		count = 0;
+		sort = 0;
+	}
+};
+
+struct  ENCODED_SCREEN_12bit_header {
+	unsigned int reserv01;
+	unsigned int reserv02;
+	unsigned int reserv03;
+	unsigned int reserv04;
+
+	unsigned int format;
+	unsigned int header_size; // 
+
+	unsigned short w, h;
+
+	unsigned char color_bit;
+	unsigned char reserve1;
+	unsigned char reserve2;
+	unsigned char reserve3;
+
+	unsigned int screen_id;
+	unsigned int old_screen_id;
+	unsigned int pal_size;
+	unsigned int body_size;
+
+	unsigned short mouse_x;
+	unsigned short mouse_y;
+	unsigned int   mouse_cursor_type_id;
+	unsigned int   keyboard_location;
+	unsigned int   itis_user_move_mouse;
+
+};
+
+#define PAL12_color_maxcount 4096
+#define PAL12_len_maxcount 4096
+
+struct  ENCODED_SCREEN_8bit_header {
+    unsigned int reserv01;
+    unsigned int reserv02;
+    unsigned int reserv03;
+    unsigned int reserv04;
+
+    unsigned int format;
+    unsigned int header_size; // 
+
+    unsigned short w, h;
+
+    unsigned char color_bit;
+    unsigned char reserve1;
+    unsigned char reserve2;
+    unsigned char reserve3;
+
+    unsigned int screen_id;
+    unsigned int old_screen_id;
+    unsigned int pal_size;
+    unsigned int body_size;
+
+    unsigned short mouse_x;
+    unsigned short mouse_y;
+    unsigned int   mouse_cursor_type_id;
+    unsigned int   keyboard_location;
+    unsigned int   itis_user_move_mouse;
+
+};
+
+
 
 class SCREEN_BUFFER {
+private:
+    std::mutex mutexx;
+    
 public:
+    int lock_owner;
+    
     FONTS* fonts;
     bool need_update = false;
     unsigned int *buffer;
     unsigned int w, h;
+    uint32_t keyboard_location;
+    uint32_t decode_color_matrix_G7C223[256];
+    void init_decode_color2();
+    bool unpack_8bit_v1(uint8_t* buf, uint32_t len);
+    std::vector<uint32_t> tmp_buffer;
+    void resize_from(SCREEN_BUFFER* src);
+    
+    
+    void lock(int v);
+    void unlock(int v);
+    
     void set_pix(unsigned int x, unsigned int y, unsigned int color) {
         if(x < w && y < h) {
             buffer[x + y*w] = color;
@@ -59,20 +172,9 @@ public:
         line_v(x+ww-1, y, hh, color);
         
     }
-    void paint_textura(unsigned int x, unsigned int y, GUItextura* textura) {
-        if(textura == nullptr ||
-           x < 0 || x + textura->w > w ||
-           y < 0 || y + textura->h > h) return;         
-        
-        int idx = 0;
-        for(int yy = 0; yy < textura->h; yy++) {
-            for(int xx = 0; xx < textura->w; xx++) {
-                set_pix(x+xx, y+yy, textura->buf[idx++]);
-            }
-        }
-    }
+    void paint_textura(unsigned int x, unsigned int y, GUItextura* textura);
     void set_size(unsigned int w_, unsigned int h_) {
-        printf("set_size(%d->%d, %d->%d)...\n", w, w_, h, h_);
+        //printf("set_size(%d->%d, %d->%d)...\n", w, w_, h, h_);
         if(w_ == w && h_ == h) return;
         w = w_;
         h = h_;
@@ -119,97 +221,23 @@ public:
         
     }
     
-    void paint_item_editpass16(GUIitem& item) {
-        int x = item.get_gx(), y = item.get_gy();
-        //rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
-        
-        FONT *font;
-        font = fonts->roboto220;
-        int text_w = font->text_width(item.edit_text);
-        int text_h = font->text_height(item.edit_text);
-        uint32_t c = 0x007788;
-        if(item.is_edit_begin) {
-            c = 0x00ffff;
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, !item.is_visible_pass, c, item.edit_text_cursor_pos);
-        } else {
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, !item.is_visible_pass, c, -1);
-        }
-    }
+    void paint_item_editpass16(GUIitem& item);
 
-    void paint_item_edittext(GUIitem& item) {
-        int x = item.get_gx(), y = item.get_gy();
-        //rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
-        
-        FONT *font;
-        font = fonts->roboto220;
-        int text_w = font->text_width(item.edit_text);
-        int text_h = font->text_height(item.edit_text);
-        uint32_t c = 0x007788;
-        if(item.is_edit_begin) {
-            c = 0x00ffff;
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, false, c, item.edit_text_cursor_pos);
-        } else {
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, false, c, -1);
-        }
-    }
+    void paint_item_edittext(GUIitem& item);
     
-    void paint_item_editid(GUIitem& item) {
-        int x = item.get_gx(), y = item.get_gy();
-        //rectangle(x, y, item.frame.w, item.frame.h, 0xffccff);
-        
-        FONT *font;
-        font = fonts->roboto220;
-        
-        int text_w = font->text_width(item.edit_text);
-        int text_h = font->text_height(item.edit_text);
-        uint32_t c = 0x007788;
-        if(item.is_edit_begin) {
-            c = 0xff0000;
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, false, 0x007788, item.edit_text_cursor_pos);
-        } else {
-            font->print(this, x, y + (item.frame.h - text_h)/2, item.edit_text, false, 0x007788, -1);
-        }
-    }
+    void paint_item_editid(GUIitem& item);
     
-    void paint_item(GUIitem& item) {
-        if(item.get_is_visible() == false) {
-            return;
-        }
-        int x = item.get_gx(), y = item.get_gy();
-        //rectangle(x, y, item.frame.w, item.frame.h, 0xff00ff);
-        
-        if(item.type == GUIitem::ItemType::editpass16) {
-            paint_item_editpass16(item);
-            return;
-        }
-        if(item.type == GUIitem::ItemType::edittext) {
-            paint_item_edittext(item);
-            return;
-        }
-        
-        if(item.type == GUIitem::ItemType::editid) {
-            paint_item_editid(item);
-            return;
-        }
-
-        if(item.textura != nullptr) {
-            paint_textura(x, y, item.textura);
-        }
-        
-    }
+    void paint_item(GUIitem& item);
     
-    void paint_items(GUIitems* items) {
-        if(items == nullptr) return;
-        for(int i=0; i < items->items.size(); i++) {
-            paint_item(items->items[i]);
-        }
-    }
+    void paint_items(GUIitems* items);
     
-    SCREEN_BUFFER(FONTS* fonts) : fonts(fonts) {
+    void paint_item_viewer(GUIitem& item);
+    
+    SCREEN_BUFFER(FONTS* fonts) : fonts(fonts), keyboard_location(0), lock_owner(0) {
         buffer = nullptr;
         w = 0;
         h = 0;
-
+        init_decode_color2();
     }
 };
 

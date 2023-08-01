@@ -10,12 +10,15 @@
  * Created on May 26, 2023, 6:18 PM
  */
 
+
 #ifndef FONT_H
 #define FONT_H
 
 #include <map>
 #include <string>
 #include <vector>
+
+
 
 class SCREEN_BUFFER;
 
@@ -56,6 +59,9 @@ public:
 };
 
 class FONT { // explicit ? }__attribute__((__packed__)); ?
+             // oпыт создания многопоточных приложений (std::thread, pthread) и использования 
+             // объектов синхронизации (mutex, condition variable, atomic и т.п.)
+             // using unique_file_t = std::unique_ptr<FILE, decltype(&std::fclose)>;
 private:
     int id;
     bool is_load_compleete;

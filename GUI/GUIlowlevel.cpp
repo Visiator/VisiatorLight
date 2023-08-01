@@ -12,12 +12,12 @@
 
 #include "GUIlowlevel.h"
 
-GUIlowlevel::GUIlowlevel() {
+/*GUIlowlevel::GUIlowlevel() {
 }
 
 GUIlowlevel::GUIlowlevel(const GUIlowlevel& orig) {
 }
 
 GUIlowlevel::~GUIlowlevel() {
-}
+}*/
 
